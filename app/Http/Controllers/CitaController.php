@@ -15,11 +15,21 @@ class CitaController extends Controller
         $rol = Auth::user()->rol;
 
         if ($rol == 'Paciente') {
-            // CAMBIO AQUÍ: Cambia 'id_usuario' por 'id_paciente'
-            $idPacienteReal = Auth::user()->paciente->id_paciente; // Obtenemos el ID del paciente logueado
+            // Verificamos primero si existe la relación con paciente para evitar el error "on null"
+            $paciente = Auth::user()->paciente;
+
+            if (!$paciente) {
+                // Si el perfil no existe, enviamos una lista vacía y el mensaje de error a la vista
+                return view('citas.index', [
+                    'citas' => collect(), 
+                    'error' => 'Tu perfil de paciente no ha sido completado. Por favor, contacta a la administración.'
+                ]);
+            }
+
+            $idPacienteReal = $paciente->id_paciente;
             $citas = Cita::where('id_paciente', $idPacienteReal)->get();
         } else {
-            // Admin y Especialista ven todo
+            // Los administradores y especialistas visualizan todos los registros
             $citas = Cita::with(['paciente', 'especialista.usuario'])->get();
         }
 
@@ -28,7 +38,7 @@ class CitaController extends Controller
 
     public function create()
     {
-        // Necesitamos la lista de médicos para el formulario
+        // Cargamos la lista de médicos para el formulario de agendamiento
         $especialistas = Especialista::with('usuario')->get();
         return view('citas.create', compact('especialistas'));
     }
@@ -42,21 +52,33 @@ class CitaController extends Controller
             'motivo' => 'required|string|max:255',
         ]);
 
+        // Validación de seguridad: verificamos que el usuario tenga un registro en la tabla de pacientes
+        $paciente = Auth::user()->paciente;
+
+        if (!$paciente) {
+            return back()
+                ->withInput()
+                ->withErrors(['error' => 'No se puede agendar la cita porque no cuentas con un perfil de paciente asociado.']);
+        }
+
         $horaFormateada = date('H:i:00', strtotime($request->hora));
 
+        // Verificamos si el horario ya está ocupado por el mismo especialista
         $existeCita = Cita::where('id_especialista', $request->id_especialista)
             ->where('fecha', $request->fecha)
             ->where('hora', $horaFormateada)
-            ->where('estado','!=', 'Cancelada')
+            ->where('estado', '!=', 'Cancelada')
             ->exists();
         
         if ($existeCita) {
-            return back()->withInput()->withErrors(['error' => 'Ya existe una cita para ese especialista en la fecha y hora seleccionadas. Por favor, elige otro horario.']);
+            return back()
+                ->withInput()
+                ->withErrors(['error' => 'Ya existe una cita para ese especialista en la fecha y hora seleccionadas. Por favor, elige otro horario.']);
         }
         
-        // 1. Guardamos la cita en una variable ($cita) para poder usar sus datos después
+        // Creación de la cita utilizando el ID verificado del paciente
         $cita = Cita::create([
-            'id_paciente' => Auth::user()->paciente->id_paciente, // Usamos el ID del paciente logueado
+            'id_paciente' => $paciente->id_paciente,
             'id_especialista' => $request->id_especialista,
             'fecha' => $request->fecha,
             'hora' => $request->hora,
@@ -64,19 +86,15 @@ class CitaController extends Controller
             'motivo' => $request->motivo,
         ]);
 
-    
-        // 2. Enviamos el correo (esto debe ir ANTES del redirect)
-        // Usamos Auth::user()->email para que le llegue al paciente real
+        // Envío de notificación por correo electrónico al paciente
         Mail::raw("Hola " . Auth::user()->nombre . ", tu cita ha sido programada exitosamente para el día {$cita->fecha} a las {$cita->hora}.", function ($message) {
-            $message->to(Auth::user()->correo) // Envía al correo del usuario logueado
+            $message->to(Auth::user()->correo)
                     ->subject('Confirmación de Cita Médica - Sabi Núcleo Médico');
         });
 
-        // 3. Ahora sí, después de enviar el correo, redireccionamos
-        return redirect()->route('citas.index')->with('success', 'Tu cita ha sido agendada y se ha enviado un correo de confirmación.');
+        return redirect()->route('citas.index')->with('success', 'Tu cita ha sido agendada y se ha enviado un correo de conﬁrmación.');
     }
 
-    // 1. Mostrar el formulario de edición
     public function edit($id)
     {
         $cita = Cita::findOrFail($id);
@@ -84,7 +102,6 @@ class CitaController extends Controller
         return view('citas.edit', compact('cita', 'especialistas'));
     }
 
-    // 2. Procesar el cambio en la base de datos
     public function update(Request $request, $id)
     {
         $request->validate([
@@ -94,25 +111,22 @@ class CitaController extends Controller
             'motivo' => 'required|string|max:255',
         ]);
 
-        // 1. Normalizamos la hora para comparar con el formato de la DB (HH:MM:00)
         $horaFormateada = date('H:i:00', strtotime($request->hora));
 
-        // 2. Buscamos choques, ignorando la cita actual y las canceladas
+        // Verificamos choques de horario ignorando la cita que estamos editando
         $existeCita = Cita::where('id_especialista', $request->id_especialista)
             ->where('fecha', $request->fecha)
-            ->where('hora', $horaFormateada) // <-- Usamos la hora normalizada
+            ->where('hora', $horaFormateada)
             ->where('estado', '!=', 'Cancelada')
             ->where('id_cita', '!=', $id) 
             ->exists();
 
-        // 3. Solo si existe un choque, regresamos con error
         if ($existeCita) {
             return back()
                 ->withInput()
                 ->withErrors(['error' => 'No se puede modificar: ese horario ya está ocupado por otra cita activa.']);
         }
 
-        // 4. Si todo está bien, actualizamos
         $cita = Cita::findOrFail($id);
         $cita->update([
             'id_especialista' => $request->id_especialista,
