@@ -55,12 +55,21 @@
                 <div class="col-md-4">
                     <div class="max-w-sm rounded-xl overflow-hidden shadow-md bg-white border border-gray-100 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 h-100 flex flex-col">
                         <div class="px-6 py-4">
-                            <div class="font-bold text-xl mb-2 text-cyan-600 uppercase tracking-wide">Mis Citas Médicas</div>
-                            <p class="text-gray-600 text-sm">Consultar la lista de pacientes y pedidos de consulta asignados.</p>
+                            {{-- Ajuste: Título dinámico según el rol --}}
+                            <div class="font-bold text-xl mb-2 text-cyan-600 uppercase tracking-wide">
+                                {{ $user->rol == 'Administrador' ? 'Control de Citas' : 'Mis Citas Médicas' }}
+                            </div>
+                            
+                            {{-- Ajuste: Descripción dinámica --}}
+                            <p class="text-gray-600 text-sm">
+                                {{ $user->rol == 'Administrador' 
+                                    ? 'Supervisar y gestionar el historial completo de solicitudes del Núcleo Médico.' 
+                                    : 'Consultar la lista de pacientes y pedidos de consulta asignados.' }}
+                            </p>
                         </div>
                         <div class="px-6 pb-4 mt-auto">
                             <a href="{{ route('citas.index') }}" class="inline-block bg-cyan-500 hover:bg-cyan-700 text-white font-bold py-2 px-6 rounded-lg transition-colors duration-200 no-underline">
-                                Ver Pedidos
+                                {{ $user->rol == 'Administrador' ? 'Ver Historial Global' : 'Ver Pedidos' }}
                             </a>
                         </div>
                     </div>
@@ -68,21 +77,35 @@
             @endif
 
             {{-- SECCIÓN PACIENTE --}}
-            @if($user->rol == 'Paciente')
-                <div class="col-md-4">
-                    <div class="max-w-sm rounded-xl overflow-hidden shadow-md bg-white border border-gray-100 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 h-100 flex flex-col">
-                        <div class="px-6 py-4">
-                            <div class="font-bold text-xl mb-2 text-emerald-600 uppercase tracking-wide">Agendar Cita</div>
-                            <p class="text-gray-600 text-sm">Crea o modifica tus solicitudes de consulta médica rápidamente.</p>
-                        </div>
-                        <div class="px-6 pb-4 mt-auto">
-                            <a href="{{ route('citas.create') }}" class="inline-block bg-emerald-500 hover:bg-emerald-700 text-white font-bold py-2 px-6 rounded-lg transition-colors duration-200 no-underline">
-                                Nuevo Pedido
-                            </a>
+                @if($user->rol == 'Paciente')
+                    <div class="col-md-4">
+                        <div class="max-w-sm rounded-xl overflow-hidden shadow-md bg-white border border-gray-100 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 h-100 flex flex-col">
+                            <div class="px-6 py-4">
+                                <div class="font-bold text-xl mb-2 text-blue-600 uppercase tracking-wide">Mis Citas Médicas</div>
+                                <p class="text-gray-600 text-sm">Revisa el estado de tus citas programadas y consulta tu historial de atención.</p>
+                            </div>
+                            <div class="px-6 pb-4 mt-auto">
+                                <a href="{{ route('citas.index') }}" class="inline-block bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition-colors duration-200 no-underline">
+                                    Ver Mis Citas
+                                </a>
+                            </div>
                         </div>
                     </div>
-                </div>
-            @endif
+
+                    <div class="col-md-4">
+                        <div class="max-w-sm rounded-xl overflow-hidden shadow-md bg-white border border-gray-100 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 h-100 flex flex-col">
+                            <div class="px-6 py-4">
+                                <div class="font-bold text-xl mb-2 text-emerald-600 uppercase tracking-wide">Agendar Cita</div>
+                                <p class="text-gray-600 text-sm">Solicita una nueva consulta con nuestros especialistas de forma rápida y sencilla.</p>
+                            </div>
+                            <div class="px-6 pb-4 mt-auto">
+                                <a href="{{ route('citas.create') }}" class="inline-block bg-emerald-500 hover:bg-emerald-700 text-white font-bold py-2 px-6 rounded-lg transition-colors duration-200 no-underline">
+                                    Nueva Cita
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                @endif
         </div>
     @endauth
 

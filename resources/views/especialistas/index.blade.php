@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Especialistas | Equipo 6</title>
+    <title>Gestión de Especialistas</title> 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body { background-color: #f8f9fa; }
@@ -21,7 +21,13 @@
         </div>
     @endif
 
-    <h2 class="text-center mb-4 text-primary">Gestión de Especialistas - Equipo 6</h2>
+    <h2 class="text-center mb-2 text-primary">Gestión de Especialistas</h2>
+    
+    <div class="text-center mb-4">
+        <a href="{{ route('dashboard') }}" class="btn btn-link text-decoration-none text-secondary">
+            &larr; Volver al Panel Principal
+        </a>
+    </div>
 
     <div class="card mb-5">
         <div class="card-body">

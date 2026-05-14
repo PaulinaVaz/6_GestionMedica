@@ -27,10 +27,10 @@
                             <div class="col-md-6">
                                 <label class="form-label fw-bold">Seleccione Especialista:</label>
                                 <select name="id_especialista" class="form-select" required>
-                                    <option value="" disabled {{ old('id_especialista') ? '' : 'selected' }}>-- Elija un médico --</option>
+                                    <option value="">Seleccione Especialista y Área...</option>
                                     @foreach($especialistas as $e)
-                                        <option value="{{ $e->id_especialista }}" {{ old('id_especialista') == $e->id_especialista ? 'selected' : '' }}>
-                                            {{ $e->usuario->nombre }} ({{ $e->especialidad }})
+                                        <option value="{{ $e->id_especialista }}">
+                                            {{ $e->usuario->nombre }} - {{ $e->especialidad }} ({{ $e->consultorio }})
                                         </option>
                                     @endforeach
                                 </select>

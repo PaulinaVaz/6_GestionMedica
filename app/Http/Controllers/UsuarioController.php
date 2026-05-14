@@ -24,23 +24,22 @@ class UsuarioController extends Controller
     // 3. Recibir los datos del formulario y guardarlos en la base de datos
     public function store(Request $request)
     {
-        // Validamos que llenen todo correctamente
+        // 1. Validamos usando el nombre del input de tu formulario (contraseña)
         $request->validate([
             'nombre' => 'required|string|max:255',
-            'correo' => 'required|email|unique:usuarios,correo', // Que el correo no se repita
+            'correo' => 'required|email|unique:usuarios,correo',
             'contraseña' => 'required|min:6',
             'rol' => 'required'
         ]);
 
-        // Creamos al usuario en la base de datos
+        // 2. Creamos al usuario mapeando 'contraseña' hacia 'password'
         Usuario::create([
             'nombre' => $request->nombre,
             'correo' => $request->correo,
-            'contraseña' => Hash::make($request->contraseña), // Encriptamos la clave por seguridad
-            'rol' => $request->rol
+            'rol' => $request->rol,
+            'password' => Hash::make($request->contraseña), 
         ]);
 
-        // Lo regresamos a la tabla con un mensaje de éxito
         return redirect()->route('usuarios.index')->with('success', 'Usuario creado correctamente.');
     }
 
@@ -70,9 +69,10 @@ class UsuarioController extends Controller
 
         // Si escribieron una contraseña nueva, la encriptamos y la guardamos. Si lo dejaron en blanco, se queda la misma.
         if ($request->filled('contraseña')) {
-            $usuario->contraseña = Hash::make($request->contraseña);
+            // Cambiamos $usuario->contraseña por $usuario->password
+            $usuario->password = Hash::make($request->contraseña);
         }
-
+        
         $usuario->save();
 
         return redirect()->route('usuarios.index')->with('success', 'Usuario actualizado con éxito.');

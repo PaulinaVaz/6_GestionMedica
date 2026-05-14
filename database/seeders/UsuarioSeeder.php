@@ -34,7 +34,7 @@ class UsuarioSeeder extends Seeder
             'nombre' => 'Jocelyn Lomeli',
             'rol' => 'Especialista',
             'correo' => 'joce.Lo@gestionmedica.com',
-            'password' => Hash::make('fisio123'),
+            'password' => Hash::make('1234567'),
             'country_code' => 'MX',
             'phone_prefix' => '+52',
             'telefono' => '3387654321',
